@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>我的 DeepSeek AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 1. 整体背景：深空黑 + 微微的蓝色光晕 */
+        body {
+            font-family: 'Orbitron', sans-serif; /* 使用科幻字体 */
+            background-color: #000;
+            background-image: radial-gradient(circle at center, #112233 0%, #000000 70%);
+            color: #0af; /* 经典的贾维斯蓝 */
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* 禁止整个页面滚动 */
+        }
+
+        /* 2. 聊天主窗口：像是一个悬浮的全息屏幕 */
+        .container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: rgba(10, 20, 30, 0.6); /* 半透明 */
+            border: 1px solid #0af; /* 蓝色边框 */
+            box-shadow: 0 0 20px rgba(0, 170, 255, 0.2), inset 0 0 50px rgba(0, 170, 255, 0.1);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            backdrop-filter: blur(5px); /* 背景模糊效果 */
+        }
+
+        h1 {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #0af; /* 文字发光 */
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 1px solid rgba(0, 170, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        /* 3. 聊天记录区域 */
+        #chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 170, 255, 0.1);
+            /* 自定义滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: #0af #000;
+        }
+
+        /* 消息气泡的基础样式 */
+        .message {
+            margin: 10px 0;
+            padding: 12px 18px;
+            border-radius: 8px;
+            max-width: 80%;
+            line-height: 1.6;
+            font-family: 'Segoe UI', sans-serif; /* 正文还是用普通字体，易读 */
+            position: relative;
+        }
+
+        /* 用户的消息：靠右，绿色科技风 */
+        .message.user {
+            align-self: flex-end;
+            margin-left: auto; /* 靠右 */
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #0f8;
+            color: #0f8;
+            box-shadow: 0 0 5px rgba(0, 255, 136, 0.2);
+        }
+
+        /* AI (贾维斯) 的消息：靠左，蓝色科技风 */
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(0, 170, 255, 0.1);
+            border: 1px solid #0af;
+            color: #bde;
+            box-shadow: 0 0 5px rgba(0, 170, 255, 0.2);
+        }
+
+        /* 4. 底部输入区域 */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid rgba(0, 170, 255, 0.3);
+            padding-top: 15px;
+        }
+
+        /* 输入框：透明背景，底部发光 */
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #058;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #0af;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+        }
+
+        /* 按钮通用样式 */
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        /* 发送按钮 */
+        #send-btn {
+            background: #0af;
+            color: #000;
+            box-shadow: 0 0 10px #0af;
+        }
+        #send-btn:hover {
+            background: #fff;
+            box-shadow: 0 0 20px #fff;
+        }
+
+        /* 麦克风按钮：像一个红色的反应堆 */
+        #mic-btn {
+            background: transparent;
+            border: 2px solid #f00;
+            color: #f00;
+            border-radius: 50%; /* 圆形 */
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            box-shadow: 0 0 5px #f00;
+        }
+
+        #mic-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 15px #f00;
+        }
+
+        /* 代码块的高亮背景修正 */
+        pre {
+            background: #0d1117 !important;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        /* 那个“脑洞滑块”的样式 */
+        #temp-slider {
+            accent-color: #0af; /* 滑块变成蓝色 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 我的 AI 助手</h1>
+
+        <div id="chat-box">
+            <div class="message ai">你好！我是你的 AI 助手，有什么可以帮你的吗？</div>
+        </div>
+        <button onclick="clearHistory()" style="background: #f00; box-shadow: 0 0 10px #f00;">🗑️ 清空</button>
+        <div class="input-area">
+            <div style="margin-bottom: 10px; color: #555;">
+                🧠 脑洞程度: <span id="temp-value">0.7</span>
+                <input type="range" id="temp-slider" min="0" max="1.5" step="0.1" value="0.7"
+                       oninput="document.getElementById('temp-value').innerText = this.value">
+            </div>
+            <input type="text" id="user-input" placeholder="输入你的问题，按回车发送..." onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="toggleRecording()" id="mic-btn" style="background-color: #ccc;">🎤</button>
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+    <script>
+
+        async function clearHistory() {
+            // 弹个窗确认一下，防止误触
+            if (!confirm("⚠️ 确定要让 AI 彻底失忆吗？这段黑历史将被永久删除！")) return;
+
+            try {
+                const response = await fetch('./clear', {
+                    method: 'DELETE',
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                const result = await response.json();
+                console.log(result.message); // 在控制台打印后端传来的成功消息
+
+                // 1. 清空前端用来聊天的历史记录变量
+                chatHistory = [];
+
+                // 2. 清空屏幕上的聊天框，并恢复初始的打招呼语
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML = '<div class="message ai">记忆已清空。你好！我是你的全新 AI 助手，有什么可以帮你的吗？</div>';
+
+            } catch (error) {
+                console.error('清空记忆失败:', error);
+                alert('清空失败，请检查后端是否正常运行！');
+            }
+        }
+        let chatHistory = []
+        function speak(text) {
+            // 如果正在说话，先打断它（避免多重音轨重叠）
+            window.speechSynthesis.cancel();
+
+            // 创建一个“说话请求”
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // 选一个中文声音 (可选，浏览器会自动选择默认中文)
+            utterance.lang = 'zh-CN';
+            utterance.rate = 1; // 语速 (0.1 ~ 10)
+            utterance.pitch = 1; // 音调 (0 ~ 2)
+
+            // 让浏览器开始说话
+            window.speechSynthesis.speak(utterance);
+        }
+            // 检查浏览器是否支持语音识别 (主要支持 Chrome 和 Edge)
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // 如果浏览器支持，就创建一个“耳朵”
+        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+        if (recognition) {
+            recognition.lang = 'zh-CN'; // 设定听中文
+            recognition.continuous = false; // 说完一句就自动停止
+
+            // 当它听到声音并转化成文字时触发
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                console.log('听到：', transcript);
+
+                // 把听到的字填进输入框
+                document.getElementById('user-input').value = transcript;
+
+                // 🌟 自动发送！(如果你想确认后再发，就把下面这行删掉)
+                sendMessage();
+            };
+
+            // 开始听的时候
+            recognition.onstart = function() {
+                document.getElementById('mic-btn').style.backgroundColor = 'red'; // 按钮变红
+                document.getElementById('mic-btn').innerText = '👂'; // 图标变耳朵
+            };
+
+            // 结束听的时候
+            recognition.onend = function() {
+                document.getElementById('mic-btn').style.backgroundColor = '#ccc'; // 恢复灰色
+                document.getElementById('mic-btn').innerText = '🎤'; // 图标变回麦克风
+            };
+        } else {
+            alert("你的浏览器不支持语音识别，请用 Chrome 或 Edge 试试！");
+        }
+
+        // 控制开关的函数
+        function toggleRecording() {
+            if (!recognition) return;
+            recognition.start(); // 开始听
+        }
+        // 这里是“大脑”，负责和你的 Python 后端通信
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const message = inputField.value.trim();
+
+            if (!message) return; // 如果是空的就不发
+
+            // 1. 在界面上显示用户的问题
+            chatBox.innerHTML += `<div class="message user">${message}</div>`;
+            inputField.value = ''; // 清空输入框
+
+            // 2. 创建一个空的 AI 回复框，准备接收数据
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'message ai';
+            aiDiv.innerHTML = 'Thinking...';
+            chatBox.appendChild(aiDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; // 滚动到底部
+
+            try {
+                chatHistory.push({ "role": "user", "content": message });
+                // 3. 发送请求给 Python 后端 (注意端口要对，通常是 8000)
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true',
+                            'X-API-Key':'Bg980707'},
+                    body: JSON.stringify({
+                        prompt: message,
+                        history: chatHistory, // 暂时留空，后续可以加上历史记录逻辑
+                        temperature: parseFloat(document.getElementById('temp-slider').value)// 新增这行：把滑块的值转成数字发过去
+                    })
+                });
+
+                // 4. 关键步骤：处理流式响应 (Streaming)
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                aiDiv.innerHTML = ''; // 清除 "Thinking..."
+
+                let fullAiResponse = "";
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) {
+                        // 🎨 这里是关键：只有等全部说完后，才去寻找页面上的代码块并上色
+                        // 这样最稳定，不会闪烁
+                        chatBox.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                        break;
+                    }
+
+                    const text = decoder.decode(value);
+
+                    // 1. 还是先拼凑完整的回复
+                    fullAiResponse += text;
+
+                    // 2. 🌟 关键修改：用 marked.parse() 把 Markdown 变成 HTML
+                    // 注意：这里我们是用 = (覆盖)，而不是 += (追加)
+                    // 因为 marked 每次都要重新渲染整个段落，才能保证排版正确
+                    aiDiv.innerHTML = marked.parse(fullAiResponse);
+
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+                chatHistory.push({ "role": "assistant", "content": fullAiResponse });
+                // ... while 循环刚刚结束 ...
+
+                // 🌟 新增：让 AI 朗读完整的回复
+                speak(fullAiResponse);
+
+                // 🌟 之前写的存入历史记录的代码
+                // chatHistory.push({ "role": "assistant", "content": fullAiResponse });
+
+            } catch (error) {
+                aiDiv.innerHTML = '❌ 连接出错了，请检查 Python 后端是否在运行！';
+                console.error('Error:', error);
+            }
+        }
+        // 🌟 新增功能：网页刚打开时，自动去拉取并显示历史记录
+        window.onload = async function() {
+            const chatBox = document.getElementById('chat-box');
+
+            try {
+                // 1. 去向后端的 /history 接口要数据
+                const response = await fetch('/history');
+                const historyData = await response.json();
+                chatHistory = historyData;
+                // 如果数据库里有记录，我们就把初始的那句默认问候语清空
+                if (historyData.length > 0) {
+                    chatBox.innerHTML = '';
+                }
+
+                // 2. 把拿到的记录一条一条画到屏幕上
+                historyData.forEach(msg => {
+                    if (msg.role === 'user') {
+                        // 画用户发的消息
+                        chatBox.innerHTML += `<div class="message user">${msg.content}</div>`;
+                    } else if (msg.role === 'assistant') {
+                        // 画 AI 发的消息 (记得用 marked 把它变成漂亮的排版)
+                        chatBox.innerHTML += `<div class="message ai">${marked.parse(msg.content)}</div>`;
+                    }
+                });
+
+                // 3. 给历史记录里的代码块上色
+                chatBox.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+                // 4. 把滚动条拉到最底下，看最新的消息
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch (error) {
+                console.error('拉取记忆失败，可能是后端没开：', error);
+            }
+        };
+    </script>
+</body>
+</html>
