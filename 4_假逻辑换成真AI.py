@@ -6,8 +6,7 @@ from typing import Optional, List
 from dotenv import load_dotenv
 import asyncio
 from fastapi.responses import StreamingResponse,FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from sympy.codegen import Print
+
 from fastapi.security import APIKeyHeader
 from fastapi import Depends
 from torchgen.gen_functionalization_type import return_str
@@ -18,7 +17,7 @@ env_path = r"D:\PythonProject3\key.env"
 load_dotenv(dotenv_path=env_path)
 print(f"正在尝试加载配置文件：{env_path}")
 print(f"调试读到的Key是：{os.getenv('OPENAI_API_KEY')}")
-Print(f"调试读到的Base URL是：{os.getenv('OPENAI_BASE_URL')}")
+print(f"调试读到的Base URL是：{os.getenv('OPENAI_BASE_URL')}")
 client = AsyncOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     base_url=os.getenv("OPENAI_BASE_URL")
@@ -105,8 +104,8 @@ async def chat_with_ai(query: AIQuery,api_key: str = Depends(verify_api_key)):
                 try:
                     background_db = SessionLocal()
                     ai_msg = ChatRecord(role="assistant", content=full_ai_response)
-                    db.add(ai_msg)
-                    db.commit()
+                    background_db.add(ai_msg)
+                    background_db.commit()
                 finally:
                     background_db.close()
 
