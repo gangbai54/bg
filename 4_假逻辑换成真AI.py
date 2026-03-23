@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse,FileResponse
 
 from fastapi.security import APIKeyHeader
 from fastapi import Depends
-from torchgen.gen_functionalization_type import return_str
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import SessionLocal, ChatRecord
 import urllib.parse
