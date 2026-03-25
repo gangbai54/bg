@@ -13,6 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import SessionLocal, ChatRecord
 import urllib.parse
+import redis
+import json
+redis_client = redis.Redis(host="jarvis-app",port=6379,db=0,decode_responses=True)
 env_path = r"D:\PythonProject3\key.env"
 load_dotenv(dotenv_path=env_path)
 print(f"正在尝试加载配置文件：{env_path}")
